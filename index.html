@@ -1,0 +1,1341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VeloMinder - Vehicle Renewal & Reminder System</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts (Inter) -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        /* Custom scrollbar for beautiful presentation */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
+
+    <div id="app" class="flex flex-col md:flex-row min-h-screen">
+        
+        <!-- Sidebar Navigation -->
+        <aside class="w-full md:w-64 bg-slate-900 text-white flex flex-col shrink-0">
+            <!-- Sidebar Header -->
+            <div class="p-5 flex items-center justify-between border-b border-slate-800">
+                <div class="flex items-center space-x-3">
+                    <div class="bg-indigo-600 p-2.5 rounded-lg text-white">
+                        <i class="fa-solid fa-gauge-high text-xl"></i>
+                    </div>
+                    <div>
+                        <h1 class="font-bold text-lg leading-tight tracking-wider">VeloMinder</h1>
+                        <span class="text-xs text-slate-400">Smart Alert Desk</span>
+                    </div>
+                </div>
+                <!-- Mobile Menu Button -->
+                <button onclick="toggleMobileMenu()" class="md:hidden text-slate-300 hover:text-white focus:outline-none">
+                    <i class="fa-solid fa-bars text-xl"></i>
+                </button>
+            </div>
+
+            <!-- Navigation Links -->
+            <nav id="sidebarMenu" class="hidden md:flex flex-col flex-1 p-4 space-y-1.5">
+                <button onclick="switchTab('dashboard')" id="btn-dashboard" class="nav-btn active flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition-all bg-indigo-600 text-white w-full text-left">
+                    <i class="fa-solid fa-chart-pie w-5"></i>
+                    <span>Dashboard</span>
+                </button>
+                <button onclick="switchTab('vehicles')" id="btn-vehicles" class="nav-btn flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition-all text-slate-400 hover:bg-slate-800 hover:text-white w-full text-left">
+                    <i class="fa-solid fa-car-side w-5"></i>
+                    <span>My Fleet</span>
+                </button>
+                <button onclick="switchTab('logs')" id="btn-logs" class="nav-btn flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition-all text-slate-400 hover:bg-slate-800 hover:text-white w-full text-left">
+                    <i class="fa-solid fa-paper-plane w-5"></i>
+                    <span>Notification Logs</span>
+                </button>
+                <button onclick="switchTab('templates')" id="btn-templates" class="nav-btn flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition-all text-slate-400 hover:bg-slate-800 hover:text-white w-full text-left">
+                    <i class="fa-solid fa-envelope-open-text w-5"></i>
+                    <span>Email Templates</span>
+                </button>
+
+                <!-- Divider -->
+                <div class="border-t border-slate-800 my-4"></div>
+
+                <!-- Simulation Info Panel -->
+                <div class="bg-slate-800/60 p-4 rounded-xl border border-slate-700/50 space-y-3">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">System Time</span>
+                        <span class="animate-ping h-2 w-2 rounded-full bg-emerald-500"></span>
+                    </div>
+                    <div class="space-y-1">
+                        <div class="text-xs text-slate-400">Simulated Date:</div>
+                        <div id="simulatedDateDisplay" class="font-mono text-sm text-indigo-300 font-bold">2026-05-21</div>
+                    </div>
+                    <button onclick="openTimeTravelModal()" class="w-full bg-indigo-600/20 hover:bg-indigo-600/40 text-indigo-300 border border-indigo-500/30 text-xs py-2 px-3 rounded-lg font-medium transition-colors flex items-center justify-center space-x-2">
+                        <i class="fa-solid fa-clock-rotate-left"></i>
+                        <span>Time Travel Control</span>
+                    </button>
+                </div>
+            </nav>
+
+            <!-- Sidebar Footer -->
+            <div class="p-4 border-t border-slate-800 text-xs text-slate-500 flex justify-between items-center">
+                <span>v1.2.0 Stable</span>
+                <span class="text-indigo-400 font-semibold">Active Engine</span>
+            </div>
+        </aside>
+
+        <main class="flex-1 flex flex-col overflow-y-auto">
+            
+            <!-- Top Control Bar with Quick Actions and Date Simulator -->
+            <header class="bg-white border-b border-slate-200 py-4 px-6 flex flex-col md:flex-row justify-between items-center gap-4">
+                <div>
+                    <h2 id="pageTitle" class="text-xl font-bold text-slate-800">Dashboard</h2>
+                    <p class="text-xs text-slate-500">Continuous background vehicle expiry tracking is online.</p>
+                </div>
+                <div class="flex flex-wrap items-center gap-3 w-full md:w-auto justify-end">
+                    <!-- Quick Trigger Simulation Button -->
+                    <button onclick="triggerAutomatedScan(true)" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs px-4 py-2.5 rounded-lg font-medium shadow-sm transition-colors flex items-center space-x-2">
+                        <i class="fa-solid fa-wand-magic-sparkles"></i>
+                        <span>Run Daily Email Audit</span>
+                    </button>
+                    <!-- Quick Add Vehicle Button -->
+                    <button onclick="openAddVehicleModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs px-4 py-2.5 rounded-lg font-medium shadow-sm transition-colors flex items-center space-x-2">
+                        <i class="fa-solid fa-plus"></i>
+                        <span>Add Vehicle</span>
+                    </button>
+                </div>
+            </header>
+
+            <!-- Toast Notification Container -->
+            <div id="toastContainer" class="fixed top-4 right-4 z-50 space-y-2 pointer-events-none"></div>
+
+            <div class="p-6 flex-1 space-y-6 max-w-7xl w-full mx-auto">
+                
+                <!-- TAB 1: DASHBOARD -->
+                <div id="tab-dashboard" class="tab-content space-y-6">
+                    <!-- Metrics Overview Cards -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+                        <!-- Total Fleet -->
+                        <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm flex items-center justify-between">
+                            <div class="space-y-1">
+                                <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Active Fleet</span>
+                                <div id="metric-total-fleet" class="text-3xl font-bold text-slate-800">0</div>
+                                <span class="text-xs text-indigo-600 font-medium">Registered units</span>
+                            </div>
+                            <div class="p-4 bg-indigo-50 text-indigo-600 rounded-xl">
+                                <i class="fa-solid fa-car-rear text-2xl"></i>
+                            </div>
+                        </div>
+
+                        <!-- 2 Weeks Warning (Yellow Alert) -->
+                        <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm flex items-center justify-between">
+                            <div class="space-y-1">
+                                <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Due in 2 Weeks</span>
+                                <div id="metric-warning-2w" class="text-3xl font-bold text-amber-600">0</div>
+                                <span class="text-xs text-amber-600 font-medium">Notification triggered</span>
+                            </div>
+                            <div class="p-4 bg-amber-50 text-amber-600 rounded-xl">
+                                <i class="fa-solid fa-bell-slash text-2xl"></i>
+                            </div>
+                        </div>
+
+                        <!-- 1 Week Critical (Orange Alert) -->
+                        <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm flex items-center justify-between">
+                            <div class="space-y-1">
+                                <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Due in 1 Week</span>
+                                <div id="metric-critical-1w" class="text-3xl font-bold text-orange-600">0</div>
+                                <span class="text-xs text-orange-600 font-medium">Escalation active</span>
+                            </div>
+                            <div class="p-4 bg-orange-50 text-orange-600 rounded-xl">
+                                <i class="fa-solid fa-triangle-exclamation text-2xl"></i>
+                            </div>
+                        </div>
+
+                        <!-- Expired (Red Alert) -->
+                        <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm flex items-center justify-between">
+                            <div class="space-y-1">
+                                <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Expired Alerts</span>
+                                <div id="metric-expired" class="text-3xl font-bold text-rose-600">0</div>
+                                <span class="text-xs text-rose-600 font-medium">Needs instant update</span>
+                            </div>
+                            <div class="p-4 bg-rose-50 text-rose-600 rounded-xl">
+                                <i class="fa-solid fa-circle-xmark text-2xl"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Live Reminders Timeline and Grid Matrix -->
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <!-- Left Block: High Priority Action Needed -->
+                        <div class="lg:col-span-2 bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden flex flex-col">
+                            <div class="p-5 border-b border-slate-100 flex items-center justify-between">
+                                <div class="flex items-center space-x-2">
+                                    <span class="h-2.5 w-2.5 rounded-full bg-rose-500 animate-pulse"></span>
+                                    <h3 class="font-bold text-slate-800">Critical Expirations & Immediate Actions</h3>
+                                </div>
+                                <span class="text-xs bg-indigo-50 text-indigo-600 px-2.5 py-1 rounded-full font-medium" id="urgent-count">0 found</span>
+                            </div>
+                            <div class="divide-y divide-slate-100 flex-1 overflow-y-auto max-h-[480px]" id="critical-list">
+                                <!-- Dynamic elements inject here -->
+                            </div>
+                        </div>
+
+                        <!-- Right Block: Simulated SMTP Log Overview & Stats -->
+                        <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-5 flex flex-col space-y-4">
+                            <h3 class="font-bold text-slate-800 flex items-center space-x-2">
+                                <i class="fa-solid fa-paper-plane text-indigo-600"></i>
+                                <span>Recent SMTP Broadcasts</span>
+                            </h3>
+                            <p class="text-xs text-slate-500">Every time a vehicle's deadline matches the threshold (2w, 1w, or expired), emails are dispatch logged instantly.</p>
+                            
+                            <div class="flex-1 space-y-3 overflow-y-auto max-h-[350px]" id="recent-logs">
+                                <!-- Logs will stream here dynamically -->
+                            </div>
+
+                            <button onclick="switchTab('logs')" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs py-2.5 rounded-lg font-semibold transition-colors flex items-center justify-center space-x-2">
+                                <span>View Detailed Send History</span>
+                                <i class="fa-solid fa-arrow-right"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Calendar Matrix Map -->
+                    <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-6">
+                        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+                            <div>
+                                <h3 class="font-bold text-lg text-slate-800">Active Expiry Schedule</h3>
+                                <p class="text-xs text-slate-500">Timeline layout highlighting critical roadtax, insurance, and service dates compared to simulated current date.</p>
+                            </div>
+                            <div class="flex gap-2 text-xs">
+                                <span class="flex items-center gap-1.5 px-2.5 py-1 bg-rose-50 text-rose-700 rounded-full font-medium"><i class="fa-solid fa-circle text-[8px]"></i> Expired</span>
+                                <span class="flex items-center gap-1.5 px-2.5 py-1 bg-orange-50 text-orange-700 rounded-full font-medium"><i class="fa-solid fa-circle text-[8px]"></i> Due &lt; 7 Days</span>
+                                <span class="flex items-center gap-1.5 px-2.5 py-1 bg-amber-50 text-amber-700 rounded-full font-medium"><i class="fa-solid fa-circle text-[8px]"></i> Due &lt; 14 Days</span>
+                                <span class="flex items-center gap-1.5 px-2.5 py-1 bg-emerald-50 text-emerald-700 rounded-full font-medium"><i class="fa-solid fa-circle text-[8px]"></i> Safe (&gt; 14 Days)</span>
+                            </div>
+                        </div>
+
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse">
+                                <thead>
+                                    <tr class="border-b border-slate-100 text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                                        <th class="py-3 px-4">Vehicle Details</th>
+                                        <th class="py-3 px-4">Road Tax Renewal</th>
+                                        <th class="py-3 px-4">Insurance Renewal</th>
+                                        <th class="py-3 px-4">Scheduled Service</th>
+                                        <th class="py-3 px-4 text-right">Audited Contact Email</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-100 text-sm" id="dashboard-timeline-table">
+                                    <!-- Populated dynamically -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="tab-vehicles" class="tab-content hidden space-y-6">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                        <div>
+                            <h3 class="font-bold text-xl text-slate-800">Your Vehicle Fleet Registry</h3>
+                            <p class="text-xs text-slate-500">Add, monitor and edit reminders. Toggle views of active expirations below.</p>
+                        </div>
+                    </div>
+
+                    <!-- Vehicle Registry Grid -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="vehicles-grid">
+                        <!-- Instantly populated dynamically -->
+                    </div>
+                </div>
+
+                <div id="tab-logs" class="tab-content hidden space-y-6">
+                    <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-6">
+                        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+                            <div>
+                                <h3 class="font-bold text-lg text-slate-800">Sent Notification Logs (Mock SMTP Relay Outbox)</h3>
+                                <p class="text-xs text-slate-500">Every single email generated by the background checks or manually triggered is displayed here with status confirmation.</p>
+                            </div>
+                            <button onclick="clearNotificationLogs()" class="text-xs font-semibold text-rose-600 hover:text-rose-700 hover:bg-rose-50 px-3 py-1.5 rounded-lg transition-colors">
+                                <i class="fa-solid fa-trash-can mr-1.5"></i> Clear Outbox History
+                            </button>
+                        </div>
+
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse">
+                                <thead>
+                                    <tr class="border-b border-slate-100 text-xs font-semibold text-slate-400 uppercase tracking-wider bg-slate-50">
+                                        <th class="py-3.5 px-4 rounded-l-lg">Timestamp</th>
+                                        <th class="py-3.5 px-4">Recipients</th>
+                                        <th class="py-3.5 px-4">Subject & Content</th>
+                                        <th class="py-3.5 px-4">Trigger Class</th>
+                                        <th class="py-3.5 px-4 rounded-r-lg text-center">Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-100 text-sm" id="detailed-logs-table">
+                                    <!-- Injected dynamically -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="tab-templates" class="tab-content hidden space-y-6">
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <!-- Templates List -->
+                        <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-5 space-y-4">
+                            <h3 class="font-bold text-slate-800">Active Alert Templates</h3>
+                            <p class="text-xs text-slate-500">Click on a template class below to preview the responsive HTML layout standard used when delivering alerts to owners.</p>
+                            
+                            <div class="space-y-2">
+                                <button onclick="selectTemplate('roadtax-2w')" id="tpl-btn-roadtax-2w" class="w-full p-4 rounded-xl border text-left transition-all active-template-btn border-indigo-200 bg-indigo-50/50">
+                                    <div class="flex items-center space-x-3 mb-1">
+                                        <span class="p-1.5 bg-amber-500 text-white rounded-md text-xs"><i class="fa-solid fa-business-time"></i></span>
+                                        <span class="font-semibold text-sm text-slate-800">Road Tax (2-Weeks Before)</span>
+                                    </div>
+                                    <p class="text-xs text-slate-500">First Warning: Dispatched to user exactly 14 days before roadtax expiration.</p>
+                                </button>
+
+                                <button onclick="selectTemplate('insurance-1w')" id="tpl-btn-insurance-1w" class="w-full p-4 rounded-xl border text-left transition-all border-slate-200 hover:border-indigo-200 hover:bg-indigo-50/20">
+                                    <div class="flex items-center space-x-3 mb-1">
+                                        <span class="p-1.5 bg-orange-500 text-white rounded-md text-xs"><i class="fa-solid fa-shield-halved"></i></span>
+                                        <span class="font-semibold text-sm text-slate-800">Insurance (1-Week Before)</span>
+                                    </div>
+                                    <p class="text-xs text-slate-500">Critical Warning: Action needed urgently within 7 days to prevent expiration.</p>
+                                </button>
+
+                                <button onclick="selectTemplate('service-expired')" id="tpl-btn-service-expired" class="w-full p-4 rounded-xl border text-left transition-all border-slate-200 hover:border-indigo-200 hover:bg-indigo-50/20">
+                                    <div class="flex items-center space-x-3 mb-1">
+                                        <span class="p-1.5 bg-rose-500 text-white rounded-md text-xs"><i class="fa-solid fa-wrench"></i></span>
+                                        <span class="font-semibold text-sm text-slate-800">Post-Expiry / Update Alert</span>
+                                    </div>
+                                    <p class="text-xs text-slate-500">Expired Status Alert: Urges owner to update records to reactivate monitoring.</p>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Live Interactive Mailbox Preview -->
+                        <div class="lg:col-span-2 bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden flex flex-col">
+                            <div class="bg-slate-900 text-white p-4 flex items-center justify-between">
+                                <div class="flex items-center space-x-2">
+                                    <span class="h-3 w-3 rounded-full bg-rose-500"></span>
+                                    <span class="h-3 w-3 rounded-full bg-amber-500"></span>
+                                    <span class="h-3 w-3 rounded-full bg-emerald-500"></span>
+                                    <span class="text-xs font-mono text-slate-400 ml-2">Secure Mail Preview Panel</span>
+                                </div>
+                                <div class="flex items-center space-x-3">
+                                    <!-- AI Generator Trigger -->
+                                    <button onclick="aiGenerateMailBody()" class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs px-3 py-1.5 rounded-lg transition-colors flex items-center space-x-1.5">
+                                        <i class="fa-solid fa-wand-magic-sparkles"></i>
+                                        <span>AI Draft Assist</span>
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <!-- Mock Email Fields -->
+                            <div class="p-4 border-b border-slate-100 space-y-2 bg-slate-50">
+                                <div class="flex text-xs"><span class="w-16 font-semibold text-slate-500">From:</span><span class="text-slate-800 font-medium">alert-engine@velominder.com &lt;VeloMinder Automated Dispatch&gt;</span></div>
+                                <div class="flex text-xs"><span class="w-16 font-semibold text-slate-500">To:</span><span class="text-indigo-600 font-semibold" id="preview-to-email">owner@dedicated-reminder.com</span></div>
+                                <div class="flex text-xs"><span class="w-16 font-semibold text-slate-500">Subject:</span><span class="text-slate-800 font-semibold" id="preview-subject">Road Tax Renewal Reminder - Action Required Within 2 Weeks</span></div>
+                            </div>
+
+                            <!-- Live rendered email body mockup -->
+                            <div class="p-6 overflow-y-auto max-h-[500px]" id="email-body-canvas">
+                                <!-- Standard Email HTML structure rendering dynamic mock data -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <!-- Modal Backdrop -->
+    <div id="modalBackdrop" class="fixed inset-0 bg-slate-950/50 backdrop-blur-sm z-40 hidden flex items-center justify-center p-4">
+        
+        <!-- MODAL 1: ADD / EDIT VEHICLE -->
+        <div id="modalVehicleForm" class="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-lg w-full overflow-hidden transform scale-95 transition-all duration-200 hidden">
+            <div class="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50">
+                <h3 id="modalTitle" class="font-bold text-slate-800 text-lg">Add New Vehicle Profile</h3>
+                <button onclick="closeModals()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            
+            <form onsubmit="saveVehicle(event)" class="p-6 space-y-4 max-h-[75vh] overflow-y-auto">
+                <input type="hidden" id="vehicle-id">
+                
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Plate Number *</label>
+                        <input type="text" id="v-plate" required placeholder="e.g. WWD 1234" class="w-full px-3.5 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Make / Model *</label>
+                        <input type="text" id="v-model" required placeholder="e.g. Perodua Myvi" class="w-full px-3.5 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Dedicated Email *</label>
+                        <input type="email" id="v-email" required placeholder="e.g. user@example.com" class="w-full px-3.5 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Owner Name *</label>
+                        <input type="text" id="v-owner" required placeholder="e.g. Adam Smith" class="w-full px-3.5 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                </div>
+
+                <hr class="border-slate-100">
+
+                <div class="space-y-3">
+                    <h4 class="text-xs font-bold text-indigo-600 uppercase tracking-wider">Expiry & Maintenance Milestones</h4>
+                    
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-500 mb-1">Road Tax Expiry Date *</label>
+                            <input type="date" id="v-roadtax" required class="w-full px-3.5 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-500 mb-1">Insurance Expiry Date *</label>
+                            <input type="date" id="v-insurance" required class="w-full px-3.5 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-500 mb-1">Next Service Date *</label>
+                            <input type="date" id="v-service-date" required class="w-full px-3.5 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-500 mb-1">Next Service Target (Odometer)</label>
+                            <input type="number" id="v-service-mileage" placeholder="e.g. 80000" class="w-full px-3.5 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="pt-4 border-t border-slate-100 flex justify-end space-x-3">
+                    <button type="button" onclick="closeModals()" class="px-4 py-2 border border-slate-200 rounded-lg text-xs font-semibold text-slate-600 hover:bg-slate-50 transition-colors">Cancel</button>
+                    <button type="submit" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-semibold shadow-md transition-colors">Save Vehicle</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- MODAL 2: TIME TRAVEL SYSTEM DATE SIMULATOR -->
+        <div id="modalTimeTravel" class="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-md w-full overflow-hidden transform scale-95 transition-all duration-200 hidden">
+            <div class="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50">
+                <h3 class="font-bold text-slate-800 text-lg">System Time Travel Console</h3>
+                <button onclick="closeModals()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <div class="p-6 space-y-4 text-center">
+                <p class="text-xs text-slate-500 leading-relaxed">
+                    By shifting the system date, you trigger our automatic alert processor. Shift forward to see how VeloMinder issues warnings exactly 2 weeks and 1 week before deadlines expire!
+                </p>
+
+                <div class="bg-indigo-50 p-4 rounded-xl border border-indigo-100 space-y-2">
+                    <label class="block text-xs font-bold text-indigo-700 uppercase tracking-wider">Define New Reference Date</label>
+                    <input type="date" id="simulated-date-input" class="w-full px-4 py-2.5 font-mono border border-indigo-200 rounded-lg text-sm text-center focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+
+                <div class="flex gap-2 justify-center">
+                    <button onclick="setDateOffset(0)" class="px-3 py-1.5 bg-slate-100 text-slate-600 text-xs rounded-lg font-medium hover:bg-slate-200 transition-colors">Reset to Today</button>
+                    <button onclick="setDateOffset(14)" class="px-3 py-1.5 bg-amber-50 text-amber-700 text-xs rounded-lg font-medium hover:bg-amber-100 transition-colors">+14 Days (Test 2-Week alert)</button>
+                    <button onclick="setDateOffset(30)" class="px-3 py-1.5 bg-rose-50 text-rose-700 text-xs rounded-lg font-medium hover:bg-rose-100 transition-colors">+30 Days (Test Expired Alert)</button>
+                </div>
+
+                <div class="pt-4 border-t border-slate-100 flex justify-end">
+                    <button onclick="applySimulatedDate()" class="w-full px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-semibold shadow-md transition-colors">
+                        Apply & Run Audit Check
+                    </button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // Core state model
+        let state = {
+            currentTab: 'dashboard',
+            simulatedDate: new Date('2026-05-21'), // Default 2026 anchor point
+            vehicles: [
+                {
+                    id: 'veh-1',
+                    plate: 'WWD 1234',
+                    model: 'Perodua Myvi 1.5L',
+                    ownerName: 'Adam Smith',
+                    email: 'adam.smith@example.com',
+                    roadTaxExpiry: '2026-06-04', // Exactly 14 days from 2026-05-21 (Trigger 2 weeks)
+                    insuranceExpiry: '2026-05-28', // Exactly 7 days from 2026-05-21 (Trigger 1 week)
+                    nextServiceDate: '2026-07-20', // Long term
+                    nextServiceMileage: 85000,
+                    history: []
+                },
+                {
+                    id: 'veh-2',
+                    plate: 'VBA 8899',
+                    model: 'Honda Civic VTEC',
+                    ownerName: 'Chloe Henderson',
+                    email: 'chloe.h@example.com',
+                    roadTaxExpiry: '2026-05-10', // Expired on 2026-05-21 (Trigger Expired)
+                    insuranceExpiry: '2026-07-15',
+                    nextServiceDate: '2026-05-18', // Expired on 2026-05-21
+                    nextServiceMileage: 110000,
+                    history: []
+                },
+                {
+                    id: 'veh-3',
+                    plate: 'QAA 2233',
+                    model: 'Toyota Hilux Double Cab',
+                    ownerName: 'Marcus Wong',
+                    email: 'marcus.wong@example.com',
+                    roadTaxExpiry: '2026-09-01', // Clean
+                    insuranceExpiry: '2026-09-01', // Clean
+                    nextServiceDate: '2026-09-15', // Clean
+                    nextServiceMileage: 45000,
+                    history: []
+                }
+            ],
+            logs: [
+                {
+                    timestamp: '2026-05-21 08:00 AM',
+                    recipient: 'adam.smith@example.com',
+                    subject: 'VeloMinder Alert: Perodua Myvi [WWD 1234] Roadtax Due in 2 Weeks',
+                    type: 'Road Tax (2-Weeks)',
+                    status: 'Delivered'
+                },
+                {
+                    timestamp: '2026-05-21 08:01 AM',
+                    recipient: 'chloe.h@example.com',
+                    subject: 'VeloMinder Alert: Honda Civic [VBA 8899] Service Expired - Urgent Action Required',
+                    type: 'Service Expired',
+                    status: 'Delivered'
+                }
+            ],
+            selectedTemplateId: 'roadtax-2w'
+        };
+
+        // Window load event setup
+        window.onload = function() {
+            // Load state from local storage optionally, or stick to robust demo state
+            const savedState = localStorage.getItem('velominder_state');
+            if (savedState) {
+                try {
+                    const parsed = JSON.parse(savedState);
+                    state.vehicles = parsed.vehicles || state.vehicles;
+                    state.logs = parsed.logs || state.logs;
+                    state.simulatedDate = new Date(parsed.simulatedDate) || state.simulatedDate;
+                } catch (e) {
+                    console.log("No stored session state available, fallback initialization.");
+                }
+            }
+            
+            // Format Simulated Date Input Box
+            document.getElementById('simulated-date-input').value = formatDateToISO(state.simulatedDate);
+            updateSimulatedDateUI();
+            
+            // Core trigger logic
+            triggerAutomatedScan(false);
+            renderUI();
+        };
+
+        // Helper functions
+        function saveToStorage() {
+            localStorage.setItem('velominder_state', JSON.stringify({
+                vehicles: state.vehicles,
+                logs: state.logs,
+                simulatedDate: state.simulatedDate.toISOString()
+            }));
+        }
+
+        function formatDateToISO(date) {
+            let d = new Date(date),
+                month = '' + (d.getMonth() + 1),
+                day = '' + d.getDate(),
+                year = d.getFullYear();
+
+            if (month.length < 2) month = '0' + month;
+            if (day.length < 2) day = '0' + day;
+
+            return [year, month, day].join('-');
+        }
+
+        function toggleMobileMenu() {
+            const menu = document.getElementById('sidebarMenu');
+            menu.classList.toggle('hidden');
+        }
+
+        // Switching Tabs Control
+        function switchTab(tabName) {
+            state.currentTab = tabName;
+            
+            // Update Active Buttons
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.classList.remove('bg-indigo-600', 'text-white');
+                btn.classList.add('text-slate-400', 'hover:bg-slate-800', 'hover:text-white');
+            });
+            const activeBtn = document.getElementById(`btn-${tabName}`);
+            if (activeBtn) {
+                activeBtn.classList.remove('text-slate-400', 'hover:bg-slate-800', 'hover:text-white');
+                activeBtn.classList.add('bg-indigo-600', 'text-white');
+            }
+
+            // Update visible component
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.add('hidden');
+            });
+            document.getElementById(`tab-${tabName}`).classList.remove('hidden');
+
+            // Update Dynamic Headings
+            const titles = {
+                dashboard: 'Fleet Dashboard Overview',
+                vehicles: 'Vehicle Fleet Registry',
+                logs: 'Mock Outbox & SMTP Logs',
+                templates: 'Alert Notification Templates & AI Generator'
+            };
+            document.getElementById('pageTitle').innerText = titles[tabName] || 'Overview';
+
+            // Additional triggers per tab
+            if (tabName === 'templates') {
+                selectTemplate(state.selectedTemplateId);
+            }
+        }
+
+        // UI Toast Engine
+        function showToast(message, type = 'success') {
+            const toast = document.createElement('div');
+            toast.className = `flex items-center space-x-3 p-4 rounded-xl border shadow-lg transition-all duration-300 transform translate-y-2 pointer-events-auto max-w-sm ${
+                type === 'success' ? 'bg-emerald-50 border-emerald-200 text-emerald-800' :
+                type === 'info' ? 'bg-indigo-50 border-indigo-200 text-indigo-800' :
+                'bg-rose-50 border-rose-200 text-rose-800'
+            }`;
+            
+            const icon = type === 'success' ? 'fa-solid fa-circle-check text-emerald-600' :
+                         type === 'info' ? 'fa-solid fa-circle-info text-indigo-600' :
+                         'fa-solid fa-triangle-exclamation text-rose-600';
+
+            toast.innerHTML = `
+                <i class="${icon} text-lg"></i>
+                <div class="flex-1">
+                    <p class="text-xs font-semibold leading-tight">${message}</p>
+                </div>
+                <button onclick="this.parentElement.remove()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-sm"></i></button>
+            `;
+            
+            document.getElementById('toastContainer').appendChild(toast);
+            setTimeout(() => {
+                toast.classList.remove('translate-y-2');
+                toast.classList.add('opacity-0', 'translate-y-[-10px]');
+                setTimeout(() => toast.remove(), 300);
+            }, 4000);
+        }
+
+        function getDaysDiff(targetDateStr) {
+            const target = new Date(targetDateStr);
+            // Reset times of comparison parameters
+            const current = new Date(state.simulatedDate);
+            current.setHours(0,0,0,0);
+            target.setHours(0,0,0,0);
+            
+            const diffTime = target - current;
+            return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        }
+
+        function getStatusDetails(daysDiff) {
+            if (daysDiff < 0) {
+                return { label: 'Expired', colorClass: 'bg-rose-50 text-rose-700 border-rose-100', dotClass: 'bg-rose-500' };
+            } else if (daysDiff <= 7) {
+                return { label: `${daysDiff}d Left (Critical)`, colorClass: 'bg-orange-50 text-orange-700 border-orange-100', dotClass: 'bg-orange-500' };
+            } else if (daysDiff <= 14) {
+                return { label: `${daysDiff}d Left (Warning)`, colorClass: 'bg-amber-50 text-amber-700 border-amber-100', dotClass: 'bg-amber-500' };
+            } else {
+                return { label: `${daysDiff}d Left (Safe)`, colorClass: 'bg-emerald-50 text-emerald-700 border-emerald-100', dotClass: 'bg-emerald-500' };
+            }
+        }
+
+        function triggerAutomatedScan(userInitiated = false) {
+            let alertCount = 0;
+            const nowStr = state.simulatedDate.toLocaleDateString();
+
+            state.vehicles.forEach(vehicle => {
+                // Checkers for Roadtax, Insurance and Service
+                const milestones = [
+                    { type: 'Road Tax', value: vehicle.roadTaxExpiry },
+                    { type: 'Insurance', value: vehicle.insuranceExpiry },
+                    { type: 'Service', value: vehicle.nextServiceDate }
+                ];
+
+                milestones.forEach(m => {
+                    const days = getDaysDiff(m.value);
+                    let shouldNotify = false;
+                    let notificationType = "";
+
+                    if (days === 14) {
+                        shouldNotify = true;
+                        notificationType = "2-Weeks Before";
+                    } else if (days === 7) {
+                        shouldNotify = true;
+                        notificationType = "1-Week Before";
+                    } else if (days === -1 || days === -15) { // Notify on immediate expiration or secondary warnings
+                        shouldNotify = true;
+                        notificationType = "Post-Expiry";
+                    }
+
+                    if (shouldNotify) {
+                        // Avoid duplicates for the exact same date and milestone type combination inside mock logs
+                        const isLogged = state.logs.some(l => 
+                            l.recipient === vehicle.email && 
+                            l.type === `${m.type} (${notificationType})` &&
+                            l.timestamp.startsWith(formatDateToISO(state.simulatedDate))
+                        );
+
+                        if (!isLogged) {
+                            alertCount++;
+                            const timestampFormatted = formatDateToISO(state.simulatedDate) + ' 08:00 AM';
+                            const subject = `VeloMinder Alert: ${vehicle.model} [${vehicle.plate}] ${m.type} is ${days < 0 ? 'EXPIRED' : 'Due Soon'}`;
+                            
+                            state.logs.unshift({
+                                timestamp: timestampFormatted,
+                                recipient: vehicle.email,
+                                subject: subject,
+                                type: `${m.type} (${notificationType})`,
+                                status: 'Delivered'
+                            });
+                        }
+                    }
+                });
+            });
+
+            if (alertCount > 0) {
+                showToast(`System Audit: Successfully generated ${alertCount} automatic email notifications based on simulated dates!`, 'info');
+            } else if (userInitiated) {
+                showToast("Audit completed. No new status changes mapped for notification intervals today.", "success");
+            }
+
+            saveToStorage();
+            renderUI();
+        }
+
+        // Time Travel actions
+        function openTimeTravelModal() {
+            document.getElementById('simulated-date-input').value = formatDateToISO(state.simulatedDate);
+            document.getElementById('modalBackdrop').classList.remove('hidden');
+            document.getElementById('modalTimeTravel').classList.remove('hidden');
+        }
+
+        function setDateOffset(days) {
+            let d = new Date();
+            d.setDate(d.getDate() + days);
+            document.getElementById('simulated-date-input').value = formatDateToISO(d);
+        }
+
+        function applySimulatedDate() {
+            const value = document.getElementById('simulated-date-input').value;
+            if (value) {
+                state.simulatedDate = new Date(value);
+                updateSimulatedDateUI();
+                closeModals();
+                triggerAutomatedScan(true);
+            }
+        }
+
+        function updateSimulatedDateUI() {
+            const formatted = state.simulatedDate.toLocaleDateString('en-US', {
+                weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+            });
+            document.getElementById('simulatedDateDisplay').innerText = formatted;
+        }
+
+        function closeModals() {
+            document.getElementById('modalBackdrop').classList.add('hidden');
+            document.getElementById('modalVehicleForm').classList.add('hidden');
+            document.getElementById('modalTimeTravel').classList.add('hidden');
+        }
+
+        // Clear notification outbox
+        function clearNotificationLogs() {
+            state.logs = [];
+            saveToStorage();
+            renderUI();
+            showToast("Notification Outbox history cleared successfully.", "success");
+        }
+
+        function renderUI() {
+            renderMetrics();
+            renderTimelineDashboard();
+            renderVehicleRegistry();
+            renderLogsTable();
+        }
+
+        function renderMetrics() {
+            let total = state.vehicles.length;
+            let warning2w = 0;
+            let critical1w = 0;
+            let expired = 0;
+
+            state.vehicles.forEach(v => {
+                const dates = [v.roadTaxExpiry, v.insuranceExpiry, v.nextServiceDate];
+                dates.forEach(d => {
+                    const days = getDaysDiff(d);
+                    if (days < 0) expired++;
+                    else if (days <= 7) critical1w++;
+                    else if (days <= 14) warning2w++;
+                });
+            });
+
+            document.getElementById('metric-total-fleet').innerText = total;
+            document.getElementById('metric-warning-2w').innerText = warning2w;
+            document.getElementById('metric-critical-1w').innerText = critical1w;
+            document.getElementById('metric-expired').innerText = expired;
+        }
+
+        function renderTimelineDashboard() {
+            const urgentList = document.getElementById('critical-list');
+            const timelineTable = document.getElementById('dashboard-timeline-table');
+            
+            urgentList.innerHTML = '';
+            timelineTable.innerHTML = '';
+
+            let actionNeededItems = [];
+
+            state.vehicles.forEach(v => {
+                const roadtaxDiff = getDaysDiff(v.roadTaxExpiry);
+                const insuranceDiff = getDaysDiff(v.insuranceExpiry);
+                const serviceDiff = getDaysDiff(v.nextServiceDate);
+
+                const roadtaxStatus = getStatusDetails(roadtaxDiff);
+                const insuranceStatus = getStatusDetails(insuranceDiff);
+                const serviceStatus = getStatusDetails(serviceDiff);
+
+                // Collect critical items
+                const milestones = [
+                    { name: 'Road Tax', diff: roadtaxDiff, expiry: v.roadTaxExpiry, status: roadtaxStatus },
+                    { name: 'Insurance Renewal', diff: insuranceDiff, expiry: v.insuranceExpiry, status: insuranceStatus },
+                    { name: 'Scheduled Service', diff: serviceDiff, expiry: v.nextServiceDate, status: serviceStatus }
+                ];
+
+                milestones.forEach(m => {
+                    if (m.diff <= 14) {
+                        actionNeededItems.push({
+                            vehicle: v,
+                            milestone: m.name,
+                            diff: m.diff,
+                            expiry: m.expiry,
+                            status: m.status
+                        });
+                    }
+                });
+
+                // Generate table row inside dashboard timeline
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-slate-50/50 transition-colors';
+                tr.innerHTML = `
+                    <td class="py-4 px-4">
+                        <div class="flex items-center space-x-3">
+                            <div class="bg-indigo-50 text-indigo-600 p-2 rounded-lg text-xs font-bold font-mono">
+                                ${v.plate}
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-slate-800 text-xs">${v.model}</h4>
+                                <span class="text-xs text-slate-500">${v.ownerName}</span>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="py-4 px-4 text-xs">
+                        <div class="font-semibold text-slate-800">${v.roadTaxExpiry}</div>
+                        <span class="inline-flex items-center gap-1.5 px-2 py-0.5 mt-1 rounded-full text-[10px] font-semibold border ${roadtaxStatus.colorClass}">
+                            <span class="h-1.5 w-1.5 rounded-full ${roadtaxStatus.dotClass}"></span>
+                            ${roadtaxStatus.label}
+                        </span>
+                    </td>
+                    <td class="py-4 px-4 text-xs">
+                        <div class="font-semibold text-slate-800">${v.insuranceExpiry}</div>
+                        <span class="inline-flex items-center gap-1.5 px-2 py-0.5 mt-1 rounded-full text-[10px] font-semibold border ${insuranceStatus.colorClass}">
+                            <span class="h-1.5 w-1.5 rounded-full ${insuranceStatus.dotClass}"></span>
+                            ${insuranceStatus.label}
+                        </span>
+                    </td>
+                    <td class="py-4 px-4 text-xs">
+                        <div class="font-semibold text-slate-800">${v.nextServiceDate}</div>
+                        <span class="inline-flex items-center gap-1.5 px-2 py-0.5 mt-1 rounded-full text-[10px] font-semibold border ${serviceStatus.colorClass}">
+                            <span class="h-1.5 w-1.5 rounded-full ${serviceStatus.dotClass}"></span>
+                            ${serviceStatus.label}
+                        </span>
+                    </td>
+                    <td class="py-4 px-4 text-xs text-right text-indigo-600 font-semibold font-mono">${v.email}</td>
+                `;
+                timelineTable.appendChild(tr);
+            });
+
+            // Populate high-urgency panel
+            document.getElementById('urgent-count').innerText = `${actionNeededItems.length} active`;
+            if (actionNeededItems.length === 0) {
+                urgentList.innerHTML = `
+                    <div class="p-8 text-center text-slate-500">
+                        <i class="fa-solid fa-face-smile text-3xl text-emerald-500 mb-2"></i>
+                        <h4 class="font-semibold text-slate-800 text-sm">Perfect Fleet Status</h4>
+                        <p class="text-xs text-slate-400 mt-1">All vehicle expirations are clean and outside reminder thresholds!</p>
+                    </div>
+                `;
+            } else {
+                // Sort to show expired or closest deadlines first
+                actionNeededItems.sort((a, b) => a.diff - b.diff);
+
+                actionNeededItems.forEach(item => {
+                    const row = document.createElement('div');
+                    row.className = 'p-4 hover:bg-slate-50 transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs';
+                    
+                    let actionButton = '';
+                    if (item.diff < 0) {
+                        actionButton = `<button onclick="triggerManualUpdatePrompt('${item.vehicle.id}')" class="bg-indigo-600 text-white font-semibold py-1.5 px-3 rounded-lg hover:bg-indigo-700 transition-colors">Update Records</button>`;
+                    } else {
+                        actionButton = `<button onclick="sendTestEmail('${item.vehicle.id}', '${item.milestone}')" class="bg-amber-600 text-white font-semibold py-1.5 px-3 rounded-lg hover:bg-amber-700 transition-colors"><i class="fa-solid fa-paper-plane mr-1.5"></i>Send Test Email</button>`;
+                    }
+
+                    row.innerHTML = `
+                        <div class="flex items-start space-x-3.5">
+                            <div class="mt-1 ${item.diff < 0 ? 'text-rose-500' : 'text-amber-500'} text-lg">
+                                <i class="${item.diff < 0 ? 'fa-solid fa-circle-exclamation' : 'fa-solid fa-bell'}"></i>
+                            </div>
+                            <div>
+                                <div class="flex items-center gap-2">
+                                    <span class="font-bold text-slate-800 font-mono">${item.vehicle.plate}</span>
+                                    <span class="text-slate-500">•</span>
+                                    <span class="font-semibold text-indigo-600">${item.milestone}</span>
+                                </div>
+                                <p class="text-slate-500 mt-0.5">${item.vehicle.model} Owned by ${item.vehicle.ownerName}</p>
+                                <span class="inline-block mt-1 font-semibold text-rose-600">${item.diff < 0 ? 'Currently Expired!' : `${item.diff} days left until expiration.`}</span>
+                            </div>
+                        </div>
+                        <div class="flex items-center space-x-2 shrink-0">
+                            ${actionButton}
+                        </div>
+                    `;
+                    urgentList.appendChild(row);
+                });
+            }
+
+            // Render right panel: recent mini logs
+            const recentLogs = document.getElementById('recent-logs');
+            recentLogs.innerHTML = '';
+            if (state.logs.length === 0) {
+                recentLogs.innerHTML = `
+                    <div class="p-6 text-center text-slate-400 text-xs">
+                        No reminders generated yet. Try shifting the system dates!
+                    </div>
+                `;
+            } else {
+                state.logs.slice(0, 4).forEach(l => {
+                    const block = document.createElement('div');
+                    block.className = 'p-3 rounded-xl border border-slate-100 bg-slate-50/50 space-y-1 text-xs';
+                    block.innerHTML = `
+                        <div class="flex justify-between text-[10px] text-slate-400">
+                            <span>${l.timestamp}</span>
+                            <span class="text-emerald-600 font-semibold uppercase">${l.status}</span>
+                        </div>
+                        <div class="font-semibold text-slate-800 truncate">${l.subject}</div>
+                        <div class="text-[10px] text-indigo-600 font-medium">To: ${l.recipient}</div>
+                    `;
+                    recentLogs.appendChild(block);
+                });
+            }
+        }
+
+        function renderVehicleRegistry() {
+            const grid = document.getElementById('vehicles-grid');
+            grid.innerHTML = '';
+
+            state.vehicles.forEach(v => {
+                const rDiff = getDaysDiff(v.roadTaxExpiry);
+                const iDiff = getDaysDiff(v.insuranceExpiry);
+                const sDiff = getDaysDiff(v.nextServiceDate);
+
+                const rStatus = getStatusDetails(rDiff);
+                const iStatus = getStatusDetails(iDiff);
+                const sStatus = getStatusDetails(sDiff);
+
+                const card = document.createElement('div');
+                card.className = 'bg-white rounded-2xl border border-slate-200/80 shadow-sm p-5 space-y-4 flex flex-col justify-between';
+                card.innerHTML = `
+                    <div class="space-y-3">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <span class="bg-indigo-50 text-indigo-600 px-3 py-1 rounded-lg text-xs font-bold font-mono border border-indigo-100">
+                                    ${v.plate}
+                                </span>
+                                <h4 class="font-bold text-slate-800 text-sm mt-2">${v.model}</h4>
+                                <p class="text-xs text-slate-400 mt-0.5">Owner: ${v.ownerName}</p>
+                            </div>
+                            <div class="flex space-x-1">
+                                <button onclick="editVehicle('${v.id}')" class="p-1.5 text-slate-400 hover:text-indigo-600 transition-colors" title="Edit Vehicle"><i class="fa-solid fa-pen-to-square"></i></button>
+                                <button onclick="deleteVehicle('${v.id}')" class="p-1.5 text-slate-400 hover:text-rose-600 transition-colors" title="Delete Vehicle"><i class="fa-solid fa-trash"></i></button>
+                            </div>
+                        </div>
+
+                        <hr class="border-slate-100">
+
+                        <div class="space-y-2.5 text-xs">
+                            <!-- Road Tax -->
+                            <div class="flex items-center justify-between">
+                                <span class="text-slate-500 font-medium"><i class="fa-solid fa-business-time mr-2 text-indigo-500"></i>Road Tax:</span>
+                                <div class="text-right">
+                                    <div class="font-semibold text-slate-700">${v.roadTaxExpiry}</div>
+                                    <span class="inline-block px-2 py-0.5 mt-0.5 rounded-full text-[10px] font-semibold border ${rStatus.colorClass}">${rStatus.label}</span>
+                                </div>
+                            </div>
+
+                            <!-- Insurance -->
+                            <div class="flex items-center justify-between">
+                                <span class="text-slate-500 font-medium"><i class="fa-solid fa-shield-halved mr-2 text-indigo-500"></i>Insurance:</span>
+                                <div class="text-right">
+                                    <div class="font-semibold text-slate-700">${v.insuranceExpiry}</div>
+                                    <span class="inline-block px-2 py-0.5 mt-0.5 rounded-full text-[10px] font-semibold border ${iStatus.colorClass}">${iStatus.label}</span>
+                                </div>
+                            </div>
+
+                            <!-- Service -->
+                            <div class="flex items-center justify-between">
+                                <span class="text-slate-500 font-medium"><i class="fa-solid fa-wrench mr-2 text-indigo-500"></i>Service target:</span>
+                                <div class="text-right">
+                                    <div class="font-semibold text-slate-700">${v.nextServiceDate}</div>
+                                    <div class="text-[10px] text-slate-400 mt-0.5">Target: ${v.nextServiceMileage ? v.nextServiceMileage.toLocaleString() : 'N/A'} km</div>
+                                    <span class="inline-block px-2 py-0.5 mt-0.5 rounded-full text-[10px] font-semibold border ${sStatus.colorClass}">${sStatus.label}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
+                        <span class="text-slate-400"><i class="fa-solid fa-envelope mr-1.5"></i>Reminders:</span>
+                        <span class="text-slate-800 font-semibold font-mono bg-slate-50 px-2.5 py-1 rounded-md border border-slate-200/50 truncate max-w-[150px]" title="${v.email}">
+                            ${v.email}
+                        </span>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        // Logs table renderer
+        function renderLogsTable() {
+            const tbody = document.getElementById('detailed-logs-table');
+            tbody.innerHTML = '';
+
+            if (state.logs.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="5" class="py-12 text-center text-slate-400 text-xs font-semibold">
+                            No logs present. Run daily audit tests with customized dates above!
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            state.logs.forEach(l => {
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-slate-50 transition-colors text-xs';
+                tr.innerHTML = `
+                    <td class="py-4 px-4 font-mono text-slate-500">${l.timestamp}</td>
+                    <td class="py-4 px-4 font-semibold text-indigo-600 font-mono">${l.recipient}</td>
+                    <td class="py-4 px-4">
+                        <div class="font-bold text-slate-800">${l.subject}</div>
+                        <p class="text-[10px] text-slate-400 mt-0.5">SMTP Relay: secure-ssl.velominder.com [Direct Dispatch Queue]</p>
+                    </td>
+                    <td class="py-4 px-4">
+                        <span class="px-2.5 py-1 bg-slate-100 text-slate-700 font-semibold rounded-lg text-[10px] border border-slate-200">${l.type}</span>
+                    </td>
+                    <td class="py-4 px-4 text-center">
+                        <span class="px-2.5 py-1 bg-emerald-50 text-emerald-700 font-semibold rounded-lg text-[10px] border border-emerald-200">
+                            <i class="fa-solid fa-circle-check mr-1"></i> ${l.status}
+                        </span>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function openAddVehicleModal() {
+            document.getElementById('modalTitle').innerText = "Add New Vehicle Profile";
+            document.getElementById('vehicle-id').value = '';
+            document.getElementById('v-plate').value = '';
+            document.getElementById('v-model').value = '';
+            document.getElementById('v-email').value = '';
+            document.getElementById('v-owner').value = '';
+            
+            // Auto fill reference dates representing normal mock thresholds
+            const todayISO = formatDateToISO(state.simulatedDate);
+            document.getElementById('v-roadtax').value = todayISO;
+            document.getElementById('v-insurance').value = todayISO;
+            document.getElementById('v-service-date').value = todayISO;
+            document.getElementById('v-service-mileage').value = '100000';
+
+            document.getElementById('modalBackdrop').classList.remove('hidden');
+            document.getElementById('modalVehicleForm').classList.remove('hidden');
+        }
+
+        function editVehicle(id) {
+            const v = state.vehicles.find(item => item.id === id);
+            if (!v) return;
+
+            document.getElementById('modalTitle').innerText = "Modify Vehicle Details";
+            document.getElementById('vehicle-id').value = v.id;
+            document.getElementById('v-plate').value = v.plate;
+            document.getElementById('v-model').value = v.model;
+            document.getElementById('v-email').value = v.email;
+            document.getElementById('v-owner').value = v.ownerName;
+            document.getElementById('v-roadtax').value = v.roadTaxExpiry;
+            document.getElementById('v-insurance').value = v.insuranceExpiry;
+            document.getElementById('v-service-date').value = v.nextServiceDate;
+            document.getElementById('v-service-mileage').value = v.nextServiceMileage || '';
+
+            document.getElementById('modalBackdrop').classList.remove('hidden');
+            document.getElementById('modalVehicleForm').classList.remove('hidden');
+        }
+
+        function saveVehicle(event) {
+            event.preventDefault();
+
+            const id = document.getElementById('vehicle-id').value;
+            const plate = document.getElementById('v-plate').value.toUpperCase().trim();
+            const model = document.getElementById('v-model').value.trim();
+            const email = document.getElementById('v-email').value.trim();
+            const ownerName = document.getElementById('v-owner').value.trim();
+            const roadTaxExpiry = document.getElementById('v-roadtax').value;
+            const insuranceExpiry = document.getElementById('v-insurance').value;
+            const nextServiceDate = document.getElementById('v-service-date').value;
+            const nextServiceMileage = parseInt(document.getElementById('v-service-mileage').value) || 0;
+
+            if (id) {
+                // Edit mode
+                const index = state.vehicles.findIndex(item => item.id === id);
+                if (index !== -1) {
+                    state.vehicles[index] = {
+                        ...state.vehicles[index],
+                        plate, model, email, ownerName, roadTaxExpiry, insuranceExpiry, nextServiceDate, nextServiceMileage
+                    };
+                    showToast(`Updated details for vehicle ${plate}.`, 'success');
+                }
+            } else {
+                // Add mode
+                const newId = 'veh-' + Math.random().toString(36).substr(2, 9);
+                state.vehicles.push({
+                    id: newId,
+                    plate, model, email, ownerName, roadTaxExpiry, insuranceExpiry, nextServiceDate, nextServiceMileage,
+                    history: []
+                });
+                showToast(`Vehicle ${plate} registered successfully!`, 'success');
+            }
+
+            closeModals();
+            saveToStorage();
+            triggerAutomatedScan(false);
+            renderUI();
+        }
+
+        function deleteVehicle(id) {
+            const v = state.vehicles.find(item => item.id === id);
+            if (!v) return;
+
+            // Simple HTML Confirmation replacement since standard alert is banned
+            if (confirm(`Are you sure you want to remove vehicle ${v.plate} from monitoring?`)) {
+                state.vehicles = state.vehicles.filter(item => item.id !== id);
+                saveToStorage();
+                triggerAutomatedScan(false);
+                renderUI();
+                showToast(`Vehicle registration removed successfully.`, 'info');
+            }
+        }
+
+        function triggerManualUpdatePrompt(id) {
+            editVehicle(id);
+            showToast("Tip: Set the expired date to a future target to reactivate monitoring safely.", "info");
+        }
+
+        function sendTestEmail(vehicleId, milestone) {
+            const v = state.vehicles.find(item => item.id === vehicleId);
+            if (!v) return;
+
+            const timestampFormatted = formatDateToISO(state.simulatedDate) + ' ' + new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+            const subject = `VeloMinder Alert Audit: ${v.model} [${v.plate}] ${milestone} is due soon`;
+            
+            state.logs.unshift({
+                timestamp: timestampFormatted,
+                recipient: v.email,
+                subject: subject,
+                type: `${milestone} (Manual Test)`,
+                status: 'Delivered'
+            });
+
+            saveToStorage();
+            renderUI();
+            showToast(`Manual alert dispatched to dedicated account: ${v.email}! Check logs.`, 'success');
+        }
+
+        function selectTemplate(templateId) {
+            state.selectedTemplateId = templateId;
+            document.querySelectorAll('.active-template-btn').forEach(btn => {
+                btn.className = 'w-full p-4 rounded-xl border text-left transition-all border-slate-200 hover:border-indigo-200 hover:bg-indigo-50/20';
+            });
+            
+            const selectedBtn = document.getElementById(`tpl-btn-${templateId}`);
+            if (selectedBtn) {
+                selectedBtn.className = 'w-full p-4 rounded-xl border text-left transition-all active-template-btn border-indigo-200 bg-indigo-50/50';
+            }
+
+            const canvas = document.getElementById('email-body-canvas');
+            const previewTo = document.getElementById('preview-to-email');
+            const previewSubject = document.getElementById('preview-subject');
+
+            const mockVehicle = state.vehicles[0]; // Reference Perodua Myvi [WWD 1234]
+
+            if (templateId === 'roadtax-2w') {
+                previewTo.innerText = mockVehicle.email;
+                previewSubject.innerText = `[VeloMinder Alert] First Warning: ${mockVehicle.model} Road Tax Expiry Due in 2 Weeks`;
+                
+                canvas.innerHTML = `
+                    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; background-color: #ffffff;">
+                        <div style="background-color: #eab308; padding: 24px; text-align: center; color: #ffffff;">
+                            <h2 style="margin: 0; font-size: 20px; font-weight: bold; letter-spacing: 0.5px;">ROAD TAX EXPIRY IN 14 DAYS</h2>
+                        </div>
+                        <div style="padding: 24px;">
+                            <p style="font-size: 14px; color: #475569; margin-top: 0;">Hi ${mockVehicle.ownerName},</p>
+                            <p style="font-size: 14px; color: #475569;">This is an automated safety alert from VeloMinder. The road tax for your vehicle, <strong>${mockVehicle.model}</strong>, with registration plate number <strong>${mockVehicle.plate}</strong>, is expiring on <strong>${mockVehicle.roadTaxExpiry}</strong>.</p>
+                            
+                            <div style="background-color: #f8fafc; border-left: 4px solid #eab308; padding: 16px; margin: 20px 0; border-radius: 4px;">
+                                <h4 style="margin: 0 0 8px 0; color: #1e293b; font-size: 14px;">Summary Profile:</h4>
+                                <table style="width: 100%; font-size: 13px; color: #475569; border-collapse: collapse;">
+                                    <tr><td style="padding: 4px 0; font-weight: bold;">Plate No:</td><td style="padding: 4px 0;">${mockVehicle.plate}</td></tr>
+                                    <tr><td style="padding: 4px 0; font-weight: bold;">Current Expiry:</td><td style="padding: 4px 0;">${mockVehicle.roadTaxExpiry}</td></tr>
+                                    <tr><td style="padding: 4px 0; font-weight: bold;">Recipient Contact:</td><td style="padding: 4px 0;">${mockVehicle.email}</td></tr>
+                                </table>
+                            </div>
+
+                            <p style="font-size: 14px; color: #475569;">Please initiate renewal procedures through authorized service hubs (e.g. MySikap portal or post office partners) within the next two weeks to maintain continuous compliance.</p>
+                            
+                            <div style="text-align: center; margin-top: 24px;">
+                                <a href="mailto:support@velominder.com?subject=Renew Road Tax Request" style="background-color: #eab308; color: #ffffff; padding: 12px 24px; text-decoration: none; font-size: 14px; font-weight: bold; border-radius: 6px; display: inline-block;">Initiate Auto Renewal Quote</a>
+                            </div>
+                        </div>
+                        <div style="background-color: #f1f5f9; padding: 16px; text-align: center; font-size: 11px; color: #94a3b8; border-top: 1px solid #e2e8f0;">
+                            VeloMinder Notification Engine • Simulated Server Node • Do Not Reply directly
+                        </div>
+                    </div>
+                `;
+            } else if (templateId === 'insurance-1w') {
+                previewTo.innerText = mockVehicle.email;
+                previewSubject.innerText = `[VeloMinder URGENT] Escalated: ${mockVehicle.model} Insurance Renewal Due in 7 Days`;
+                
+                canvas.innerHTML = `
+                    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; background-color: #ffffff;">
+                        <div style="background-color: #f97316; padding: 24px; text-align: center; color: #ffffff;">
+                            <h2 style="margin: 0; font-size: 20px; font-weight: bold; letter-spacing: 0.5px;">INSURANCE EXPIRES IN 7 DAYS</h2>
+                        </div>
+                        <div style="padding: 24px;">
+                            <p style="font-size: 14px; color: #475569; margin-top: 0;">Hi ${mockVehicle.ownerName},</p>
+                            <p style="font-size: 14px; color: #475569;">We have logged a critical expiration limit. Your motor vehicle insurance policy for <strong>${mockVehicle.model} (${mockVehicle.plate})</strong> is expiring in <strong>exactly 7 days</strong> on <strong>${mockVehicle.insuranceExpiry}</strong>.</p>
+                            
+                            <div style="background-color: #fdf2f8; border-left: 4px solid #f97316; padding: 16px; margin: 20px 0; border-radius: 4px;">
+                                <h4 style="margin: 0 0 8px 0; color: #1e293b; font-size: 14px;">Urgent Timeline Breakdown:</h4>
+                                <p style="margin: 0; font-size: 13px; color: #ef4444; font-weight: bold;">Failure to renew will invalidate your road legality immediately.</p>
+                            </div>
+
+                            <p style="font-size: 14px; color: #475569;">Please select the link below to verify your coverage quote options directly before your policy lapses.</p>
+                            
+                            <div style="text-align: center; margin-top: 24px;">
+                                <a href="mailto:insurance@velominder.com?subject=Policy Renewal Quote ${mockVehicle.plate}" style="background-color: #f97316; color: #ffffff; padding: 12px 24px; text-decoration: none; font-size: 14px; font-weight: bold; border-radius: 6px; display: inline-block;">Get Coverage Quote</a>
+                            </div>
+                        </div>
+                        <div style="background-color: #f1f5f9; padding: 16px; text-align: center; font-size: 11px; color: #94a3b8; border-top: 1px solid #e2e8f0;">
+                            VeloMinder Notification Engine • Simulated Server Node • Do Not Reply directly
+                        </div>
+                    </div>
+                `;
+            } else {
+                // Post expiry template
+                previewTo.innerText = mockVehicle.email;
+                previewSubject.innerText = `[Action Required] UPDATE RECORD: Expiry date reached for ${mockVehicle.model} (${mockVehicle.plate})`;
+                
+                canvas.innerHTML = `
+                    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; background-color: #ffffff;">
+                        <div style="background-color: #ef4444; padding: 24px; text-align: center; color: #ffffff;">
+                            <h2 style="margin: 0; font-size: 20px; font-weight: bold; letter-spacing: 0.5px;">MONITORING HALTED - UPDATE REQUIRED</h2>
+                        </div>
+                        <div style="padding: 24px;">
+                            <p style="font-size: 14px; color: #475569; margin-top: 0;">Hi ${mockVehicle.ownerName},</p>
+                            <p style="font-size: 14px; color: #475569;">The expiration date set for your road tax/insurance tracker has passed. We have paused active reminder monitoring to maintain database accuracy.</p>
+                            
+                            <p style="font-size: 14px; color: #475569;">To re-enable active notifications, please sign into the dashboard and <strong>update your newest expiry dates</strong> as soon as possible.</p>
+                            
+                            <div style="text-align: center; margin-top: 24px;">
+                                <a href="#" style="background-color: #ef4444; color: #ffffff; padding: 12px 24px; text-decoration: none; font-size: 14px; font-weight: bold; border-radius: 6px; display: inline-block;">Go To Dashboard Settings</a>
+                            </div>
+                        </div>
+                        <div style="background-color: #f1f5f9; padding: 16px; text-align: center; font-size: 11px; color: #94a3b8; border-top: 1px solid #e2e8f0;">
+                            VeloMinder Notification Engine • Simulated Server Node • Do Not Reply directly
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        async function aiGenerateMailBody() {
+            showToast("Calling Gemini API to custom-craft an urgent alert copy...", "info");
+            
+            const currentTemplate = state.selectedTemplateId;
+            const mockVehicle = state.vehicles[0]; // Perodua Myvi
+            
+            // Build the conversational prompt structure matching current selection
+            const systemPrompt = "You are VeloMinder AI Assistant. Write professional, elegant responsive notification emails for car owners about upcoming expirations.";
+            const userPrompt = `Draft an extremely persuasive email copy for ${mockVehicle.ownerName} regarding their ${mockVehicle.model} with plate number ${v=mockVehicle.plate} which is facing expiry in ${currentTemplate === 'roadtax-2w' ? '14 days' : '7 days'}. Keep it concise, friendly yet serious. Output purely HTML style code block inside standard div with nice colors.`;
+
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=`;
+            
+            // Construct request payload
+            const payload = {
+                contents: [{ parts: [{ text: userPrompt }] }],
+                systemInstruction: {
+                    parts: [{ text: systemPrompt }]
+                }
+            };
+
+            try {
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) throw new Error("API call throttling/failed. Falling back to local generation.");
+
+                const result = await response.json();
+                const candidate = result.candidates?.[0];
+                if (candidate && candidate.content?.parts?.[0]?.text) {
+                    const cleanHtml = candidate.content.parts[0].text.replace(/```html|```/g, '').trim();
+                    document.getElementById('email-body-canvas').innerHTML = cleanHtml;
+                    showToast("AI Email Content successfully rendered!", "success");
+                }
+            } catch (err) {
+                console.log(err);
+                showToast("Fallback: Rendered localized premium copy since API connection is off-line.", "info");
+                selectTemplate(state.selectedTemplateId); // Reset to stable local templates
+            }
+        }
+    </script>
+</body>
+</html>
